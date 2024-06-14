@@ -4,6 +4,7 @@ import cors from 'cors'
 import { toDoApiObjectVacancies } from './Service/todoApiObjectVacancies.js'
 import { employerParsing } from './Parsing/Employer/employerParsing.js'
 import { ogrnParsing } from './Parsing/OGRM/ogrnParsing.js'
+import { getCompanyInformation } from './Parsing/OGRM/getCompanyInformation.js'
 
 
 const app = express()
@@ -32,7 +33,9 @@ app.post('/feedback', (req, res) => employerParsingController(req, res))
 
 //парсим отзывы
 //employerParsing('ООО Тануки')
-ogrnParsing()
+//ogrnParsing()
+let test = new getCompanyInformation()
+test.getOGRNCompany()
 
 
 app.listen(port, () => {

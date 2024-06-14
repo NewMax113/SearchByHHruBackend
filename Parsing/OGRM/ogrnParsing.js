@@ -1,94 +1,85 @@
 import puppeteer from "puppeteer-extra"
 
+//добавить удаление пустоты у строки
+//добавить перелистывание
+//больше проверок
+class SearchCompanies {
+    constructor(name, city, page) {
+        this.name = name
+        this.city = city
+        this.page = page
+    }
 
-export let ogrnParsing = async (name='КРОК', city='Белгород') => {
-    //ООО ХКМ Евразия Сейлз
+    async returnTrueName() {
+        let listSelector = "div.uk-container.uk-container-xlarge.pb-5 > table > tbody > tr"
+        let list = await this.page.$$(listSelector);
+        let arr = [] //если массив (найти истину). Возвращать один элемент
 
+        if (!list) {
+            return 'не лист'
+        }
+
+        for (let indexList = 1; indexList < list.length; indexList++) {
+            
+            let nameClassSelector = `${listSelector}:nth-child(${indexList}) > td:nth-child(2) > div:nth-child(1) > a`
+            let cityClassSelector = `${listSelector}:nth-child(${indexList}) > td:nth-child(2) > div:nth-child(3)`
+
+            let nameClassDOM = await this.page.$(nameClassSelector)
+            let cityClassDOM = await this.page.$(cityClassSelector)
+
+            if (!nameClassDOM || !cityClassDOM) {
+                return 'оишбка nameClassSelector, cityClassSelector'
+            }
+
+            let stringNameClass = (await this.page.evaluate((nameClassDOM) => nameClassDOM.innerText, nameClassDOM)).replace(/"/g, '').toLowerCase()
+            let stringCityClass = (await this.page.evaluate((cityClassDOM) => cityClassDOM.innerText, cityClassDOM)).toLowerCase()
+
+            //если массив (найти истину). Возвращать один элемент. *если один элемент, то вернуть null
+            if (await this.validationNameCompany(stringNameClass, stringCityClass, indexList)) {
+                arr.push(await this.validationNameCompany(stringNameClass, stringCityClass, indexList))
+            }
+        }
+        return arr
+    }
+
+    async searchElement () {}
+    
+    async validationNameCompany(stringNameClass, stringCityClass, indexList) {
+        let formCompany = ['', 'ооо', 'зао', 'ип', 'оао', 'пао', 'ао']
+
+        for (let indexForm = 0; indexForm < formCompany.length; indexForm++) {
+            let normalizeName = `${formCompany[indexForm]} ${this.name}`.replace(/"/g, '').toLowerCase()
+            if (normalizeName === stringNameClass) {
+                if (await this.comparisonCity(stringCityClass)) {
+                    return {normalizeName, indexList}
+                }
+            }
+        }
+        return null
+    }
+    
+    async comparisonCity(stringCityClass) {
+        const normalizedCity = stringCityClass.toLowerCase();
+        return normalizedCity.includes(this.city.toLowerCase());
+    }
+}
+
+
+export let ogrnParsing = async (name = 'ФОРУС БАНК', city = 'Нижегородская область') => {
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
 
     try {
         await page.goto(`https://checko.ru/search?query=${name}`);
 
-        let companyIndex = await page.evaluate(searchForCompanyByIndex, name, city);
-        console.log(companyIndex)
-        // await page.waitForSelector('.x-section')
-        if (companyIndex) {
-            await page.click(`#body > main > div.uk-container.uk-container-xlarge.pb-5 > table > tbody > tr:nth-child(${companyIndex}) > td:nth-child(2) > div:nth-child(1) > a`)
-            await page.waitForSelector('.x-section');
-            
-        }
+        let trueCompany = new SearchCompanies(name, city, page)
 
-        let priseCompany = await page.evaluate(getPrise)
+        console.log(await trueCompany.returnTrueName())
 
-        console.log(priseCompany)
         await browser.close();
-        return priseCompany
 
     } catch (e) {
         console.log('Ошибка: ', e)
         await browser.close()
     }
-}
-
-let searchForCompanyByIndex = (name, city) => {
-    try {
-        let list = document.querySelector("#body > main > div.uk-container.uk-container-xlarge.pb-5 > table > tbody");
-        //попробовать избаваиться
-        if (!list) {
-            return 'не лист'
-        }
-
-        for (let index = 1; index < list.children.length; index++) {
-            let nameClass = document.querySelector(`#body > main > div.uk-container.uk-container-xlarge.pb-5 > table > tbody > tr:nth-child(${index}) > td:nth-child(2) > div:nth-child(1) > a`)
-            let cityClasss = document.querySelector(`#body > main > div.uk-container.uk-container-xlarge.pb-5 > table > tbody > tr:nth-child(${index}) > td:nth-child(2) > div:nth-child(3)`)
-            let textNameClass = nameClass.innerText.replace(/"/g, '').toLowerCase();
-
-            let newNameCompany = (name, textNameClass, index, cityClasss, city) => {
-                let formCompany = ['', 'ооо', 'зао', 'ип', 'оао']
-
-                let coincidenceCity = (cityClasss, city) => {
-                    let mutationCityClass = cityClasss.innerText.toLowerCase().replace(city.toLowerCase(), null)
-                    if (cityClasss.innerText.toLowerCase() !== mutationCityClass) {
-                        return true
-                    }
-                    return false
-                }
-                
-                for (let i = 0; i < formCompany.length; i++) {
-                    let mutateName = `${formCompany[i]} ${name.toLowerCase()}`
-                    if (mutateName == textNameClass && coincidenceCity(cityClasss, city)) {
-                        return index
-                    }
-                }
-                return 'Опа'
-                 
-            }
-
-            let coincidenceCity = (cityClasss, city) => {
-                let mutationCityClass = cityClasss.innerText.toLowerCase().replace(city.toLowerCase(), null)
-                if (cityClasss.innerText.toLowerCase() !== mutationCityClass) {
-                    return true
-                }
-                return false
-            }
-
-            if (newNameCompany(name, textNameClass, index, cityClasss, city) == textNameClass && coincidenceCity(cityClasss, city)) {
-                return index;
-            }
-        }
-        return null;
-
-    } catch (e) {
-        return null
-    }
-
-}
-
-let getPrise = () => {
-    let money = document.querySelector("#basic > div.uk-grid.uk-grid-divider.uk-grid-small > div.uk-width-1.uk-width-1-2\\@m.uk-first-column > div:nth-child(7) > div:nth-child(2)")
-    if (!money) {
-        return 'Ошибка getPrise'
-    }
-    return money.innerText
 }
