@@ -5,6 +5,7 @@ import { toDoApiObjectVacancies } from './Service/todoApiObjectVacancies.js'
 import { employerParsing } from './Parsing/Employer/employerParsing.js'
 import { ogrnParsing } from './Parsing/OGRM/ogrnParsing.js'
 import { getCompanyInformation } from './Parsing/OGRM/getCompanyInformation.js'
+import { chekingLinks } from './Parsing/OGRM/checkingLinks.js'
 
 
 const app = express()
@@ -35,7 +36,9 @@ app.post('/feedback', (req, res) => employerParsingController(req, res))
 //employerParsing('ООО Тануки')
 //ogrnParsing()
 let test = new getCompanyInformation()
-test.getOGRNCompany()
+//test.getOGRNCompany()
+
+chekingLinks()
 
 
 app.listen(port, () => {
