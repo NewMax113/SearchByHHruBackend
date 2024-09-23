@@ -1,85 +1,67 @@
-import puppeteer from "puppeteer-extra"
+import puppeteer from "puppeteer-extra";
+import { SearchInputFactory } from "./searchInput.js";
+import { DOMHandler } from "./domHandler.js";
 
-//добавить удаление пустоты у строки
-//добавить перелистывание
-//больше проверок
-class SearchCompanies {
-    constructor(name, city, page) {
-        this.name = name
-        this.city = city
-        this.page = page
-    }
-
-    async returnTrueName() {
-        let listSelector = "div.uk-container.uk-container-xlarge.pb-5 > table > tbody > tr"
-        let list = await this.page.$$(listSelector);
-        let arr = [] //если массив (найти истину). Возвращать один элемент
-
-        if (!list) {
-            return 'не лист'
+let clickInput = async(link, page, name) => {
+    //нужно сделать так, что бы если изначально текст введет в инпут, то проверить его на совпадение
+    let element = await page.$$('input[type="text"]')
+    for (let index = 0; index < element.length; index++) {
+        await element[index].type(name)
+        let elementValue = await (await element[index].getProperty('value')).jsonValue()
+        console.log(elementValue,'eV') 
+        //попробовать решить это через goto
+        if (elementValue === name) {
+            await page.keyboard.press('Enter') 
+            break
         }
-
-        for (let indexList = 1; indexList < list.length; indexList++) {
-            
-            let nameClassSelector = `${listSelector}:nth-child(${indexList}) > td:nth-child(2) > div:nth-child(1) > a`
-            let cityClassSelector = `${listSelector}:nth-child(${indexList}) > td:nth-child(2) > div:nth-child(3)`
-
-            let nameClassDOM = await this.page.$(nameClassSelector)
-            let cityClassDOM = await this.page.$(cityClassSelector)
-
-            if (!nameClassDOM || !cityClassDOM) {
-                return 'оишбка nameClassSelector, cityClassSelector'
-            }
-
-            let stringNameClass = (await this.page.evaluate((nameClassDOM) => nameClassDOM.innerText, nameClassDOM)).replace(/"/g, '').toLowerCase()
-            let stringCityClass = (await this.page.evaluate((cityClassDOM) => cityClassDOM.innerText, cityClassDOM)).toLowerCase()
-
-            //если массив (найти истину). Возвращать один элемент. *если один элемент, то вернуть null
-            if (await this.validationNameCompany(stringNameClass, stringCityClass, indexList)) {
-                arr.push(await this.validationNameCompany(stringNameClass, stringCityClass, indexList))
-            }
-        }
-        return arr
-    }
-
-    async searchElement () {}
-    
-    async validationNameCompany(stringNameClass, stringCityClass, indexList) {
-        let formCompany = ['', 'ооо', 'зао', 'ип', 'оао', 'пао', 'ао']
-
-        for (let indexForm = 0; indexForm < formCompany.length; indexForm++) {
-            let normalizeName = `${formCompany[indexForm]} ${this.name}`.replace(/"/g, '').toLowerCase()
-            if (normalizeName === stringNameClass) {
-                if (await this.comparisonCity(stringCityClass)) {
-                    return {normalizeName, indexList}
-                }
-            }
-        }
-        return null
-    }
-    
-    async comparisonCity(stringCityClass) {
-        const normalizedCity = stringCityClass.toLowerCase();
-        return normalizedCity.includes(this.city.toLowerCase());
-    }
+    } 
 }
 
+const clickLink = async (page, link, name) => {
+  console.log(link)
+    let s = await page.$$eval('a', (selectorA, link, name) => {
+        let clickFf = () => {
+            let arr = [];
+            for (let index = 0; index < selectorA.length; index++) {
+                if (selectorA[index].href.includes(link)) {
+                  selectorA[index].click()
+                }
+            }
+            return arr;
+        };
+        return clickFf();
+    }, link, name);
+    return s;
+};
 
-export let ogrnParsing = async (name = 'ФОРУС БАНК', city = 'Нижегородская область') => {
+export let ogrnParsing = async (name = 'ООО "КРОК"', city = 'Белгородская', link = 'https://checko.ru') => {
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
 
     try {
-        await page.goto(`https://checko.ru/search?query=${name}`);
+        await page.goto(link);
+        // const searchInput = SearchInputFactory.createSearchInput(link, page, name);
+        // await searchInput.clickInput();
+        await clickInput(link, page, name)  
 
-        let trueCompany = new SearchCompanies(name, city, page)
+        await page.waitForSelector('div');
+        console.log('сраб waitFor');
 
-        console.log(await trueCompany.returnTrueName())
+        let list = await DOMHandler.getElementList(page, 'tr');
+        if (!list.length) {
+            list = await DOMHandler.getElementList(page, 'div');
+        }
+        let matchingLink = await DOMHandler.getMatchingLink(list, city, name);
+        //console.log(await matchingLink);
 
-        await browser.close();
+        let clickedLink = await clickLink(page, matchingLink, name);
+        //console.log('lion', await clickedLink);
+
+        await page.waitForSelector('апыаываы');
 
     } catch (e) {
-        console.log('Ошибка: ', e)
-        await browser.close()
+        console.log('Ошибка: ', e);
+    } finally {
+        //await browser.close();
     }
-}
+}; 

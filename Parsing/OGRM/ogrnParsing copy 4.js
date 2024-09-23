@@ -1,0 +1,229 @@
+import puppeteer from "puppeteer-extra"
+
+
+class SearchInput {
+    constructor(link, page, name) {
+        this.link = link
+        this.page = page
+        this.name = name
+    }
+
+    async clickInput() {
+        let element = await this.page.$$('input')
+
+        for (let index = 0; index < element.length; index++) {
+            await element[index].type(this.name)
+            let elementValue = await (await element[index].getProperty('value')).jsonValue() //*переписать на evaluate
+            if (elementValue === this.name) {
+                await this.page.keyboard.press('Enter')
+                break
+            }
+        }
+    }
+}
+class SearchCompanies {
+    constructor(name, city, page) {
+        this.name = name
+        this.city = city
+        this.page = page
+    }
+
+    async returnTrueName() {
+        let listSelector = "div.uk-container.uk-container-xlarge.pb-5 > table > tbody > tr"
+        let list = await this.page.$$(listSelector);
+        let arr = [] //если массив (найти истину). Возвращать один элемент
+
+        if (!list) {
+            return 'не лист'
+        }
+
+        for (let indexList = 1; indexList < list.length; indexList++) {
+
+            let nameClassSelector = `${listSelector}:nth-child(${indexList}) > td:nth-child(2) > div:nth-child(1) > a`
+            let cityClassSelector = `${listSelector}:nth-child(${indexList}) > td:nth-child(2) > div:nth-child(3)`
+
+            let nameClassDOM = await this.page.$(nameClassSelector)
+            let cityClassDOM = await this.page.$(cityClassSelector)
+
+            if (!nameClassDOM || !cityClassDOM) {
+                return 'оишбка nameClassSelector, cityClassSelector'
+            }
+
+            let stringNameClass = (await this.page.evaluate((nameClassDOM) => nameClassDOM.innerText, nameClassDOM)).replace(/"/g, '').toLowerCase()
+            let stringCityClass = (await this.page.evaluate((cityClassDOM) => cityClassDOM.innerText, cityClassDOM)).toLowerCase()
+
+            //если массив (найти истину). Возвращать один элемент. *если один элемент, то вернуть null
+            if (await this.validationNameCompany(stringNameClass, stringCityClass, indexList)) {
+                arr.push(await this.validationNameCompany(stringNameClass, stringCityClass, indexList))
+            }
+        }
+        return arr
+    }
+
+    async searchElement() { }
+
+    async validationNameCompany(stringNameClass, stringCityClass, indexList) {
+        let formCompany = ['', 'ооо', 'зао', 'ип', 'оао', 'пао', 'ао']
+
+        for (let indexForm = 0; indexForm < formCompany.length; indexForm++) {
+            let normalizeName = `${formCompany[indexForm]} ${this.name}`.replace(/"/g, '').toLowerCase()
+            if (normalizeName === stringNameClass) {
+                if (await this.comparisonCity(stringCityClass)) {
+                    return { normalizeName, indexList }
+                }
+            }
+        }
+        return null
+    }
+
+    async comparisonCity(stringCityClass, city) {
+        const normalizedCity = stringCityClass.toLowerCase();
+        return normalizedCity.includes(this.city.toLowerCase());
+    }
+
+    async returnList() {
+        let list = await this.page.$$eval('tr', els => {
+            let iterationDOMElement = (el) => {
+                let arr = []
+                for (let index = 0; index < el.length; index++) {
+                    
+                    arr.push({
+                        value: el[index].innerText,
+                        class: el[index].className,
+                        href: el[index].href,
+                        child: iterationDOMElement(el[index].children)
+                    });
+                }
+                return arr
+            }
+            return iterationDOMElement(els)
+        });
+
+
+        let list2 = await this.page.$$eval('div', els => {
+            const iterationDOMElement = (el) => {
+                let arr = [];
+                for (let index = 0; index < el.length; index++) {
+         
+                    if (el[index].className.replace('item', '') !== el[index].className) {
+                        arr.push(el[index]);
+                    }
+
+                }
+                return arr;
+            };
+            //return iterationDOMElement(els)
+            let iterationDOMElement2 = (el) => {
+                let arr = []
+                for (let index = 0; index < el.length; index++) {
+                    arr.push({
+                        value: el[index].innerText,
+                        class: el[index].className,
+                        href: el[index].href,
+                        child: iterationDOMElement2(el[index].children)
+                    });
+                }
+                return arr
+            }
+            return iterationDOMElement2(iterationDOMElement(els))
+        });
+
+        //return this.href([this.search(list2)])[0]
+        return [this.search(list2)]
+        return list2
+    }
+
+    comparisonCity2(stringCityClass, city) {
+        const normalizedCity = stringCityClass.toLowerCase();
+        return normalizedCity.includes(city.toLowerCase());
+    }
+
+    iterationDOMElement(el) { 
+        let arr = []
+        for (let index = 0; index < el.length; index++) {
+            arr.push({ 
+                value: el[index].innerHTML,
+                class: el[index].className,
+                href: el[index].href,
+                child: this.iterationDOMElement(el[index].children)
+            });
+        }
+        return arr
+    }
+
+    search(list) {
+        for (let index = 0; index < list.length; index++) {
+            if (this.comparisonCity(list[index].value, this.city) && this.comparisonCity(list[index].value, this.name)) {
+                return list[index]
+            }
+        }
+    }
+
+    href(arr) {
+        let url = []
+        for (let index = 0; index < arr.length; index++) {
+            if (arr[index].href) {
+                url.push(arr[index].href)
+                break
+
+            }
+            if (arr[index].child) {
+                url = url.concat(this.href(arr[index].child))
+            }
+        }
+        return url
+    }
+
+    async clickLink(lin) {
+        let s = await this.page.$$eval('a', (selectorA, lin) => {
+            let clickFf = () => {
+                for (let index = 0; index < selectorA.length; index++) {
+                    if (selectorA[index].innerText.includes(lin)) {
+                        selectorA[index].click()
+                        return true
+                    }
+                }
+                // return arr
+                return false
+            }
+            return clickFf()
+        }, lin)
+        return s
+    }
+}
+
+
+export let ogrnParsing = async (name = 'ООО "Открытый Код"', city = 'Самарская', link = 'https://www.rusprofile.ru/') => {
+    const browser = await puppeteer.launch({ headless: false });
+    const page = await browser.newPage();
+
+    try {
+        await page.goto(link);
+        let switchLinls2 = new SearchInput(link, page, name)
+        await switchLinls2.clickInput()
+        await page.waitForSelector('div') //может modal вернуть //возможно нужно прописать tr
+
+        let trueCompany = new SearchCompanies(name, city, page)
+
+        let lin = await trueCompany.returnList()
+        console.log(await trueCompany.returnList())
+
+        await trueCompany.clickLink(name)
+        await page.waitForSelector('dsadassd')
+
+        await browser.close();
+
+    } catch (e) {
+        console.log('Ошибка: ', e)
+        await browser.close()
+    }
+}
+
+//добавить по div
+//если добавить ссылку с листом, то он бесконечно вводит в input
+
+//добавить удаление пустоты у строки
+//добавить перелистывание
+//больше проверок
+
+//добавить остановку ипоиска элемаентов с ссылкой, если присутсвтует класс menu или nav

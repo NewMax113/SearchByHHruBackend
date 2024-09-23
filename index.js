@@ -36,9 +36,9 @@ app.post('/feedback', (req, res) => employerParsingController(req, res))
 //employerParsing('ООО Тануки')
 //ogrnParsing()
 let test = new getCompanyInformation()
-//test.getOGRNCompany()
+test.getOGRNCompany()
 
-chekingLinks()
+//chekingLinks()
 
 
 app.listen(port, () => {
