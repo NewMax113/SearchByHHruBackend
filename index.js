@@ -29,8 +29,31 @@ const employerParsingController = async (req, res) => {
 }
 
 //routes.js
-app.get('/', (req, res) => searchWordController(req, res))
-app.post('/feedback', (req, res) => employerParsingController(req, res))
+//app.get('/', (req, res) => searchWordController(req, res))
+
+app.get('/', async (req, res) => {
+  
+
+
+  console.log(req.query)
+  let urlParams = ''
+  for (let key in req.query) {
+    urlParams += req.query[key] && `&${key}=${req.query[key]}`
+  }
+
+  const resultFun = async () => {
+    const start = Date.now();
+    let vacancy = await toDoApiObjectVacancies(urlParams)
+    const end = Date.now();
+  console.log(`Время выполнения: ${end - start} мс`)
+    return vacancy
+  }
+  
+  res.send(await resultFun())
+});
+
+// app.post('/feedback', (req, res) => employerParsingController(req, res))
+//app.post('/feedback', (req, res) => `${req}`)
 
 //парсим отзывы
 //employerParsing('ООО Тануки')

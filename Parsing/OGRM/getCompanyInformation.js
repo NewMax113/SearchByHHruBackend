@@ -16,6 +16,6 @@ export class getCompanyInformation {
 
     getOGRNCompany () {
         // ogrnParsing('ПАО "РОСТВЕРТОЛ"', 'Ростовская область')
-        ogrnParsing()
+       // ogrnParsing()
     }
 }
