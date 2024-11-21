@@ -1,35 +1,44 @@
-export const getVacancy = async (id) => {
+export const getVacancy = async (id, token) => {
     try {
+        console.log(token)
         if (!id) {
-            return  null
+            throw new Error('не получен ID')
         }
         let vacancy = await fetch(`https://api.hh.ru/vacancies/${id}`, {
             method: 'GET',
             headers: {
-                'HH-User-Agent': 'JobSearch (maxim0ruseev@gmail.com)'
+                'Authorization': `Bearer ${token}`, // Токен прямо в заголовке
+                'User-Agent': 'JobSearch (maxim0ruseev@gmail.com)',
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
         })
-            .then(response => response.json())
- 
-        return {
-            name: vacancy?.name || null,
-            city: vacancy?.area?.name || null,
-            description: vacancy?.description || null,
-            salary: vacancy?.salary
-                ? {
-                    from: vacancy.salary?.from || null,
-                    to: vacancy.salary?.to || null,
-                    currency: vacancy.salary?.currency || null,
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Вакансия не найдена')
+                } else {
+                   return response.json() 
                 }
-                : null,
-            schedule: vacancy?.schedule?.name || null,
-            experience: vacancy?.experience?.name || null,
-            employer: vacancy?.employer?.name || null,
-            alternate_url: vacancy?.alternate_url || null,
-        }
-        //добавить проверки
-    } catch (e) {
-        console.log('Ошибка:', e)
+            }
+        )
+
+            return {
+                name: vacancy.name,
+                city: vacancy.area.name,
+                description: vacancy.description,
+                salary: vacancy.salary
+                    ? {
+                        from: vacancy.salary.from,
+                        to: vacancy.salary.to,
+                        currency: vacancy.salary.currency,
+                    }
+                    : null,
+                schedule: vacancy.schedule.name,
+                experience: vacancy.experience.name,
+                employer: vacancy.employer.name,
+                alternate_url: vacancy.alternate_url,
+            }
+    } catch (error) {
+        throw error
     }
 }
 
