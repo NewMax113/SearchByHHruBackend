@@ -9,7 +9,7 @@ import { chekingLinks } from './Parsing/OGRM/checkingLinks.js'
 
 
 const app = express()
-const port = 3000
+const port = 3001
 
 
 app.use(cors());
@@ -32,24 +32,43 @@ const employerParsingController = async (req, res) => {
 //app.get('/', (req, res) => searchWordController(req, res))
 
 app.get('/', async (req, res) => {
-  
 
 
-  console.log(req.query)
+
+  console.log(req.query, 'получили')
   let urlParams = ''
+  let token = ''
   for (let key in req.query) {
-    urlParams += req.query[key] && `&${key}=${req.query[key]}`
+    if (key == 'token') {
+      token = req.query[key]
+    } else {
+      if (typeof req.query[key] === 'object') {
+        req.query[key].map(element => {
+          urlParams += req.query[key] && `&${key}=${element}`
+        })
+      } else {
+        urlParams += req.query[key] && `&${key}=${req.query[key]}`
+      }
+    }
+  }
+  console.log(urlParams, 'распределили')
+
+  try {
+    const resultFun = async () => {
+      const start = Date.now();
+      let vacancy = await toDoApiObjectVacancies(urlParams, token)
+      const end = Date.now();
+      console.log(`Время выполнения: ${end - start} мс`)
+      return vacancy
+    }
+    let data = await resultFun()
+
+    res.send(data)
+  } catch (error) {
+    console.log(error.message)
+    res.status(500).json({ error: error.message })
   }
 
-  const resultFun = async () => {
-    const start = Date.now();
-    let vacancy = await toDoApiObjectVacancies(urlParams)
-    const end = Date.now();
-  console.log(`Время выполнения: ${end - start} мс`)
-    return vacancy
-  }
-  
-  res.send(await resultFun())
 });
 
 // app.post('/feedback', (req, res) => employerParsingController(req, res))
