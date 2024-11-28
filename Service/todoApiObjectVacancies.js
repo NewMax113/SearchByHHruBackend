@@ -5,7 +5,7 @@ export const toDoApiObjectVacancies = async (urlParams, token) => {
         const start = Date.now();
 
 
-        let vacancy = await fetch(`https://api.hh.ru/vacancies?${urlParams}bfgff`, {
+        let vacancy = await fetch(`https://api.hh.ru/vacancies?${urlParams}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`, // Токен прямо в заголовке

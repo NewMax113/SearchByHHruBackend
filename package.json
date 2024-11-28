@@ -4,7 +4,7 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "mysql2": "^3.9.4",
-    "puppeteer": "^22.6.5",
+    "puppeteer": "^22.15.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "sequelize": "^6.37.2"

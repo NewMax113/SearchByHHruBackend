@@ -1,3 +1,4 @@
+import { getCom } from './getCom.js'
 import { ogrnParsing } from './ogrnParsing.js'
 
 // export const getCompanyInformation = async() => {
@@ -5,17 +6,17 @@ import { ogrnParsing } from './ogrnParsing.js'
 // }
 export class getCompanyInformation {
     constructor (nameCompany, cityCompany) {
+        this.resI = {}
         this.nameCompany = nameCompany
         this.cityCompany = cityCompany
         this.trueNameCompany = ''
     }
 
-    //добавить проверку по названию. Если есть совпадения при улсовиях, то возвращает название
-    //затем ищем компанию по названию, кликаем и попроубем вернуть ссылку
-    //
-
-    getOGRNCompany () {
-        // ogrnParsing('ПАО "РОСТВЕРТОЛ"', 'Ростовская область')
-       // ogrnParsing()
+    getresult () {
+        let res = new getCom()
+        let a = res.getOGRNCompany()
+        this.resI = {...a}
     }
 }
+
+

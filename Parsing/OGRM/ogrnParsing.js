@@ -1,67 +1,125 @@
-import puppeteer from "puppeteer-extra";
-import { SearchInputFactory } from "./searchInput.js";
-import { DOMHandler } from "./domHandler.js";
+import puppeteer from "puppeteer-extra"
+import linkRedirect from "./Action/linkRedirect.js"
+import searchElement from "./Action/searchElement.js";
+import filterList from "./Action/filterList.js";
+import findByName from "./Action/findByName.js";
 
-let clickInput = async(link, page, name) => {
-    //нужно сделать так, что бы если изначально текст введет в инпут, то проверить его на совпадение
-    let element = await page.$$('input[type="text"]')
-    for (let index = 0; index < element.length; index++) {
-        await element[index].type(name)
-        let elementValue = await (await element[index].getProperty('value')).jsonValue()
-        console.log(elementValue,'eV') 
-        //попробовать решить это через goto
-        if (elementValue === name) {
-            await page.keyboard.press('Enter') 
-            break
-        }
-    } 
-}
 
-const clickLink = async (page, link, name) => {
-  console.log(link)
-    let s = await page.$$eval('a', (selectorA, link, name) => {
-        let clickFf = () => {
-            let arr = [];
-            for (let index = 0; index < selectorA.length; index++) {
-                if (selectorA[index].href.includes(link)) {
-                  selectorA[index].click()
-                }
-            }
-            return arr;
-        };
-        return clickFf();
-    }, link, name);
-    return s;
+export const parseUrl = async (page) => {
+    try {
+        const parsedUrl = new URL(page.url());
+        return parsedUrl;
+    } catch (e) {
+        console.log('Ошибка при парсинге URL:', e);
+        throw e;
+    }
 };
 
-export let ogrnParsing = async (name = 'ООО "КРОК"', city = 'Белгородская', link = 'https://checko.ru') => {
+const searchCompanyObj = async (listCompany, name, city) => {
+    let filterListCompany = filterList(listCompany, city)
+    let company = findByName(filterListCompany, name)
+    return company
+}
+
+const getRatingBar = async(page) => {
+    let green = await page.$eval('#rating-bar > div.green', element => element.textContent.trim());
+    let yellow = await page.$eval('#rating-bar > div.yellow', element => element.textContent.trim());
+    let red = await page.$eval('#rating-bar > div.red', element => element.textContent.trim());
+
+    let a = {green, yellow, red}
+    console.log(a);
+}
+const getRevenue = async(page) => {
+    try {
+        let data = await page.$$eval('#accounting-huge > div:nth-child(1)', elements =>
+            elements.map(element => element.textContent.trim())
+        );
+
+        let result = {};
+        if (data.length > 0) {
+            const cleanedText = data[0]
+                .replace('Выручка', '') 
+                .replace('\n', '')  
+                .trim();                
+
+            const match = cleanedText.match(/([\d,.]+)\s(млн|млрд|трлн)\sруб.([+-][\d%]+)/);
+            if (match) {
+                result = {
+                    value: match[1],    
+                    scale: match[2],     
+                    growth: match[3],   
+                };
+            }
+        }
+
+        console.log(result);
+        return result;
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+
+
+export let ogrnParsing = async (name = 'ООО "ОТКРЫТЫЙ КОД"', city = 'Москва', link = 'https://checko.ru/') => {
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
+    await page.goto(link);
 
     try {
-        await page.goto(link);
-        // const searchInput = SearchInputFactory.createSearchInput(link, page, name);
-        // await searchInput.clickInput();
-        await clickInput(link, page, name)  
+        let links = await linkRedirect(page, link, name)
+        let urlRedirect = await parseUrl(links)
 
-        await page.waitForSelector('div');
-        console.log('сраб waitFor');
+        let listCompany = await searchElement(links)
+        let getCompanyObj = await searchCompanyObj(listCompany, name, city)
+        console.log(getCompanyObj)
+        //console.log(getCompanyObj)
+        await page.goto(getCompanyObj.href);
+        
+        let ratingBarObj = await getRatingBar(page)
+        let revenueObj = await getRevenue(page)
 
-        let list = await DOMHandler.getElementList(page, 'tr');
-        if (!list.length) {
-            list = await DOMHandler.getElementList(page, 'div');
-        }
-        let matchingLink = await DOMHandler.getMatchingLink(list, city, name);
-        //console.log(await matchingLink);
+        
 
-        let clickedLink = await clickLink(page, matchingLink, name);
-        //console.log('lion', await clickedLink);
+       // await page.waitForSelector('dsadassd')
 
-        await page.waitForSelector('апыаываы');
+
+        await browser.close();
+
+        //}
+
+
+
+        // await page.waitForSelector('tr') //может modal вернуть //возможно нужно прописать tr
+        // console.log('сраб waitFor')
+
+
+        // let trueCompany = new SearchCompanies(name, city, page)
+        // if (page.url() !== link) {
+        // await browser.close(); 
+        // }
+
+        // let lin = await trueCompany.returnList()
+        // console.log(await trueCompany.returnList())
+
+        // if (lin) {
+        //     await trueCompany.clickLink(lin, name);
+        // }
+        // console.log(await trueCompany.clickLink(lin, name))
+        // await page.waitForSelector('dsadassd')
+
 
     } catch (e) {
-        console.log('Ошибка: ', e);
-    } finally {
-        //await browser.close();
+        console.log('Ошибка: ', e)
+        await browser.close()
     }
-}; 
+}
+
+//добавить по div
+//если добавить ссылку с листом, то он бесконечно вводит в input
+
+//добавить удаление пустоты у строки
+//добавить перелистывание
+//больше проверок
+
+//добавить остановку ипоиска элемаентов с ссылкой, если присутсвтует класс menu или nav
+//добавить до проверку на город при отправке данных

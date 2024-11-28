@@ -5,7 +5,6 @@ import { toDoApiObjectVacancies } from './Service/todoApiObjectVacancies.js'
 import { employerParsing } from './Parsing/Employer/employerParsing.js'
 import { ogrnParsing } from './Parsing/OGRM/ogrnParsing.js'
 import { getCompanyInformation } from './Parsing/OGRM/getCompanyInformation.js'
-import { chekingLinks } from './Parsing/OGRM/checkingLinks.js'
 
 
 const app = express()
@@ -23,9 +22,10 @@ const searchWordController = async (req, res) => {
 }
 
 const employerParsingController = async (req, res) => {
-  console.log(req.body)
+  console.log(await req.body.name)
   let content2 = await employerParsing(req.body.name)
-  await res.send(content2)
+  return content2
+  //await res.send(content2)
 }
 
 //routes.js
@@ -33,7 +33,7 @@ const employerParsingController = async (req, res) => {
 
 app.get('/', async (req, res) => {
 
-
+  
 
   console.log(req.query, 'получили')
   let urlParams = ''
@@ -62,6 +62,7 @@ app.get('/', async (req, res) => {
       return vacancy
     }
     let data = await resultFun()
+    
 
     res.send(data)
   } catch (error) {
@@ -75,10 +76,13 @@ app.get('/', async (req, res) => {
 //app.post('/feedback', (req, res) => `${req}`)
 
 //парсим отзывы
-//employerParsing('ООО Тануки')
+ //employerParsing('ООО Тануки')
 //ogrnParsing()
 let test = new getCompanyInformation()
-test.getOGRNCompany()
+test.getresult()
+//console.log(test.resI)
+employerParsingController({body: {name: 'ВИТА'}})
+
 
 //chekingLinks()
 

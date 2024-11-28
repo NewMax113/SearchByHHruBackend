@@ -20,7 +20,6 @@ export const getVacancy = async (id, token) => {
                 }
             }
         )
-
             return {
                 name: vacancy.name,
                 city: vacancy.area.name,
