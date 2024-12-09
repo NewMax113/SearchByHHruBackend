@@ -4,6 +4,7 @@ export const getVacancy = async (id, token) => {
         if (!id) {
             throw new Error('не получен ID')
         }
+        console.log(id, token)
         let vacancy = await fetch(`https://api.hh.ru/vacancies/${id}`, {
             method: 'GET',
             headers: {

@@ -3,6 +3,7 @@ import { commonVacAndEmp } from './commonVacAndEmp.js'
 export const toDoApiObjectVacancies = async (urlParams, token) => {
     try {
         const start = Date.now();
+        console.log(token)
 
 
         let vacancy = await fetch(`https://api.hh.ru/vacancies?${urlParams}`, {

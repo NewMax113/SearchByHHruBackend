@@ -6,6 +6,7 @@
     "mysql2": "^3.9.4",
     "puppeteer": "^22.15.0",
     "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-proxy": "^1.0.2",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "sequelize": "^6.37.2"
   },
