@@ -5,9 +5,10 @@ export const commonVacAndEmp = async (vacancies, token) => {
     const start = Date.now();
     try {
         let vacanciesMap = await Promise.all(vacancies.items.map(async (vacancy, index) => {
+
             return {
                 vacancy: await getVacancy(vacancy.id, token),
-                //employer: await getEmployer(vacancy.employer.id)
+                //employer: await getEmployer(vacancy.employer.id, token)
             }
         }))
         const end = Date.now();

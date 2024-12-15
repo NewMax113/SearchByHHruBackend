@@ -15,28 +15,33 @@ export const getVacancy = async (id, token) => {
         })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Вакансия не найдена')
+                    throw new Error('Превышен лимит запросов. Сброс через сутки')
                 } else {
-                   return response.json() 
+                    return response.json()
                 }
             }
-        )
-            return {
-                name: vacancy.name,
-                city: vacancy.area.name,
-                description: vacancy.description,
-                salary: vacancy.salary
-                    ? {
-                        from: vacancy.salary.from,
-                        to: vacancy.salary.to,
-                        currency: vacancy.salary.currency,
-                    }
-                    : null,
-                schedule: vacancy.schedule.name,
-                experience: vacancy.experience.name,
-                employer: vacancy.employer.name,
-                alternate_url: vacancy.alternate_url,
-            }
+            )
+            console.log(vacancy)
+        return {
+            id: vacancy.id,
+            name: vacancy.name,
+            city: vacancy.area.name,
+            description: vacancy.description,
+            salary: vacancy.salary
+                ? {
+                    from: vacancy.salary.from,
+                    to: vacancy.salary.to,
+                    currency: vacancy.salary.currency,
+                }
+                : null,
+            schedule: vacancy.schedule.name,
+            experience: vacancy.experience.name,
+            employer: vacancy.employer.name,
+            employer_id: vacancy.employer.id,
+            alternate_url: vacancy.alternate_url,
+            accredited_it_employer: vacancy.employer.accredited_it_employer,
+            trusted: vacancy.employer.trusted,
+        }
     } catch (error) {
         throw error
     }

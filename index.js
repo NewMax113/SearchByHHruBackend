@@ -58,7 +58,7 @@ app.post('/feedback', async (req, res) => {
   console.log( req.body)
   if (req?.body?.name) {
     let createResultParsing = new ProcessorFacade()
-    let getResultParsing = createResultParsing.processAll(req.body.name, req.body.city)
+    let getResultParsing = createResultParsing.processAll(req.body.name, req.body.city, req.body.remoteWork, req.body.employer_id, req.body.token)
     res.send(await getResultParsing)
     console.log(await getResultParsing, 'res')
   } else {

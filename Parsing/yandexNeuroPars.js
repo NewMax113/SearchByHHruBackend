@@ -25,12 +25,10 @@ export let yandexNeuroPars = async (name, city) => {
             width: 1920,
             height: 1080,
         });
-
-        // const cookies = await page.cookies();
-        // await page.deleteCookie(...cookies);
+        
 
         try {
-            await page.goto(`https://yandex.ru/search?text=инн+${name.toLowerCase()}+${city}&source=tabbar&promo=force_neuro`, { waitUntil: 'domcontentloaded' });
+            await page.goto(`https://yandex.ru/search?text=ИНН+${name}+${city}&source=tabbar&promo=force_neuro`, { waitUntil: 'domcontentloaded' });
 
             const captch = await page.$('.CaptchaLinks-Links');
 
@@ -52,22 +50,34 @@ export let yandexNeuroPars = async (name, city) => {
 
                 const searchResult = await getValueElement(page)
 
-                if (searchResult[0].toLowerCase().includes('инн')) {
-                    const innNumber = searchResult[0].match(/\d{10,13}/g);
-                    console.log(innNumber)
-                    console.log('Конец')
-                    await browser.close()
-                    return innNumber
+                if (searchResult) {
+                    for (let index = 0; index < searchResult.length; index++) {
+                        if (searchResult[index].toLowerCase().includes('инн')) {
+                            const innNumber = searchResult[index].match(/\d{10,13}/g);
+                            if (innNumber) {
+                                console.log(innNumber)
+                                console.log('Конец')
+                                await browser.close()
+                                return innNumber
+                            } else {
+                                continue
+                            }
+                        } else if (searchResult[index].toLowerCase().includes('бин')) {
+                            console.log('Не является организацией, относящиеся к РФ')
+                            console.log('Конец')
+                            await browser.close()
+                            break
 
-                } else if (searchResult[0].toLowerCase().includes('бин')) {
-                    console.log('Не является организацией, относящиеся к РФ')
-                    console.log('Конец')
+                        } else {
+                            console.log(`В строке ${index + 1} ИНН не найден`)
+                            continue
+                        }
+                    }
+                    console.log('ИНН не найден')
                     await browser.close()
                     break
-
                 } else {
-                    console.log('ИНН не найден')
-                    console.log('Конец')
+                    console.error('нету тела ответа:', e)
                     await browser.close()
                     break
                 }

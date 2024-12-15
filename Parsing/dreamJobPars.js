@@ -16,7 +16,7 @@ const getRecommendations = async (page) => {
         '.company__indicator-number',
         element => element.map(el => el.innerText.trim().replace('%', '')) // Получаем текст первого найденного элемента
     );
-    return { grade: result[0], recommendations: result[1] }
+    return { grade: parseFloat(result[0].replace(",", ".")), recommendations: result[1] }
 }
 
 export let dreamJobPars = async (name) => {
