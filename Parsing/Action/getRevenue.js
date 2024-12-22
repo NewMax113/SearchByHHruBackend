@@ -27,7 +27,8 @@ const getRevenue = async (page) => {
         return result;
 
     } catch (error) {
-        console.error("Error:", error);
+        //console.error("Error:", error);
+        return null
     }
 }
 

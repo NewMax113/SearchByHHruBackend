@@ -21,7 +21,7 @@ export const getVacancy = async (id, token) => {
                 }
             }
             )
-            console.log(vacancy)
+
         return {
             id: vacancy.id,
             name: vacancy.name,

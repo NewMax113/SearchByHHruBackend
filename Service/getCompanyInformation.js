@@ -1,7 +1,8 @@
 
 import { checkoPars } from '../Parsing/checkoPars.js'
 import { dreamJobPars } from '../Parsing/dreamJobPars.js'
-import { yandexNeuroPars } from '../Parsing/yandexNeuroPars.js'
+import { googleInnPars } from '../Parsing/googleInnPars.js'
+
 import { getEmployer } from './getEmployer.js'
 
 
@@ -11,9 +12,9 @@ export class DreamJobWebInfo {
     }
 }
 
-export class YandexNeuroWebInfo {
+export class GoogleInnInfo {
     async getInfo(name, city) {
-        return await yandexNeuroPars(name, city)
+        return await googleInnPars(name, city)
     }
 }
 
@@ -44,11 +45,14 @@ export class ReliabilityCalculator {
         } else { reliabilityPercentage -= 30 }
 
         if (chekoInfo?.ratingBarObj) {
-            chekoInfo.ratingBarObj?.green < 200 && (reliabilityPercentage -= 5)
-            chekoInfo.ratingBarObj?.green < 100 && (reliabilityPercentage -= 5)
-            chekoInfo.ratingBarObj?.yellow && (reliabilityPercentage -= 10)
-            chekoInfo.ratingBarObj?.red && (reliabilityPercentage -= 20)
-
+            if (!chekoInfo.ratingBarObj?.green) {
+                reliabilityPercentage -= 35
+            } else {
+                chekoInfo.ratingBarObj?.green < 200 && (reliabilityPercentage -= 5)
+                chekoInfo.ratingBarObj?.green < 100 && (reliabilityPercentage -= 5)
+                chekoInfo.ratingBarObj?.yellow && (reliabilityPercentage -= 10)
+                chekoInfo.ratingBarObj?.red && (reliabilityPercentage -= 20)
+            }
         } else { reliabilityPercentage -= 35 }
         console.log(reliabilityPercentage)
         console.log({ dreamJobInfo, chekoInfo })
@@ -59,7 +63,7 @@ export class ReliabilityCalculator {
 
 export class ProcessorFacade {
     constructor() {
-        this.yandexNeuroWebInfo = new YandexNeuroWebInfo()
+        this.googleWebInfo = new GoogleInnInfo()
         this.chekoWebInfo = new ChekoWebInfo()
         this.dreamWebJobInfo = new DreamJobWebInfo()
     }
@@ -67,22 +71,18 @@ export class ProcessorFacade {
     async processAll(name, city, remoteWork, employer_id, token) {
         const regex = /(ООО|ОАО|ЗАО|ПАО|ИП|НКО|ГБУ|ЧУП|ПТ|КТ|СП|АО|ГУП|МУП|ФГУП|КФХ|ТСН|ПБОЮЛ|АР|СРО|ТОС)/g;
         const result = name.replace(regex, '');
-        let yandexNeuroInn
+        let googleInfo
         let chekoInfo
         let dreamJobInfo = this.dreamWebJobInfo.getInfo(result)
-        if (remoteWork && employer_id) {
-            let employer_city = await getEmployer(employer_id, token)
-            if (await employer_city) {
-                yandexNeuroInn = this.yandexNeuroWebInfo.getInfo(name, await employer_city)
-            } else {
-                yandexNeuroInn = this.yandexNeuroWebInfo.getInfo(name, city)
-            }
-        } else {
-            yandexNeuroInn = this.yandexNeuroWebInfo.getInfo(name, city)
+        let employer_city = await getEmployer(employer_id, token)
+ 
+        if (await employer_city) {
+            googleInfo = this.googleWebInfo.getInfo(name, await employer_city)
         }
 
-        if (await yandexNeuroInn) {
-            chekoInfo = this.chekoWebInfo.getInfo(await yandexNeuroInn)
+        if (await googleInfo) {
+            console.log(`${name}-${city}: ${await googleInfo}`)
+            chekoInfo = this.chekoWebInfo.getInfo(await googleInfo)
 
         } else {
             chekoInfo = null

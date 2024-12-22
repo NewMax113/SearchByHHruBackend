@@ -16,12 +16,12 @@ const getRecommendations = async (page) => {
         '.company__indicator-number',
         element => element.map(el => el.innerText.trim().replace('%', '')) // Получаем текст первого найденного элемента
     );
-    return { grade: parseFloat(result[0].replace(",", ".")), recommendations: result[1] }
+    return { grade: result[0] ? parseFloat(result[0].replace(",", ".")) : null, recommendations: result[1] ? result[1] : null}
 }
 
 export let dreamJobPars = async (name) => {
 
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({ headless: true });
 
     const page = await browser.newPage();
 

@@ -2,8 +2,6 @@ import express from 'express'
 import bodyParser from 'body-parser'
 import cors from 'cors'
 import { toDoApiObjectVacancies } from './Service/todoApiObjectVacancies.js'
-import { yandexNeuroPars } from './Parsing/yandexNeuroPars.js'
-import { checkoPars } from './Parsing/checkoPars.js'
 import { ProcessorFacade } from './Service/getCompanyInformation.js'
 
 const app = express()
