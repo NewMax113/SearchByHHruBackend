@@ -41,6 +41,7 @@ export const getVacancy = async (id, token) => {
             alternate_url: vacancy.alternate_url,
             accredited_it_employer: vacancy.employer.accredited_it_employer,
             trusted: vacancy.employer.trusted,
+            img: vacancy.employer?.logo_urls?.original
         }
     } catch (error) {
         throw error

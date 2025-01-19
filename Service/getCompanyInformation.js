@@ -74,10 +74,13 @@ export class ProcessorFacade {
         let googleInfo
         let chekoInfo
         let dreamJobInfo = this.dreamWebJobInfo.getInfo(result)
+        console.log(employer_id, token, 'ТУТ')
         let employer_city = await getEmployer(employer_id, token)
+        console.log(employer_city, 'ответ')
  
         if (await employer_city) {
             googleInfo = this.googleWebInfo.getInfo(name, await employer_city)
+            console.log(googleInfo)
         }
 
         if (await googleInfo) {
@@ -85,6 +88,7 @@ export class ProcessorFacade {
             chekoInfo = this.chekoWebInfo.getInfo(await googleInfo)
 
         } else {
+            console.log('Это ошибка googleInfo')
             chekoInfo = null
         }
 

@@ -29,7 +29,7 @@ export const toDoApiObjectVacancies = async (urlParams, token) => {
         return {
             pages: {
                 pages: vacancy.pages,
-                page: vacancy.page,
+               // page: vacancy.page,
                 found: vacancy.found,
             },
             items: await commonVacAndEmp(vacancy, token)

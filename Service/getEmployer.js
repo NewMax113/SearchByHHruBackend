@@ -11,7 +11,7 @@ export const getEmployer = async (id, token) => {
             .then(data => data)
             .catch(err => null)
 
-        return selectedVacancies.area.name
+        return selectedVacancies?.area?.name
             // name: selectedVacancies.name,
             // logo_urls: selectedVacancies.logo_urls.original,
             // type: selectedVacancies.type,
